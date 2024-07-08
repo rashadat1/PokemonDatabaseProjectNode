@@ -188,3 +188,137 @@
 .search-results .region-card:hover {
   transform: translateY(-5px);
 }
+
+.featured-pokemon {
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.pokemon-grid {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.pokemon-card {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  width: 150px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.pokemon-card:hover {
+  transform: translateY(-5px);
+}
+
+.pokemon-card img {
+  width: 100px;
+  height: 100px;
+}
+
+.pokemon-card h3 {
+  margin: 10px 0 5px;
+}
+
+.pokemon-card p {
+  font-size: 14px;
+  color: #666;
+}
+
+.footer {
+  padding: 20px;
+  background-color: #333;
+  color: white;
+  text-align: center;
+  border-top: 4px solid #0044cc;
+  margin-top: 20px;
+}
+
+.footer p {
+  margin: 0;
+  padding: 0;
+}
+
+.footer .social-media {
+  margin-top: 10px;
+}
+
+.footer .social-media a {
+  color: white;
+  margin: 0 10px;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer .social-media a:hover {
+  color: #cccccc;
+}
+
+.footer .social-media a svg {
+  width: 24px;
+  height: 24px;
+}
+
+.latest-news {
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.latest-news h2 {
+  margin-bottom: 20px;
+  font-size: 24px;
+  color: #333;
+}
+
+.latest-news ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.news-item {
+  padding: 15px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  transition: box-shadow 0.3s;
+}
+
+.news-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.news-item h3 {
+  margin: 0 0 10px;
+  font-size: 20px;
+  color: #0073e6;
+}
+
+.news-item h3 a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.news-item h3 a:hover {
+  text-decoration: underline;
+}
+
+.news-date {
+  font-size: 14px;
+  color: #777;
+  margin-bottom: 10px;
+}
+
+.news-description {
+  font-size: 16px;
+  color: #555;
+  margin-bottom: 20px;
+}
