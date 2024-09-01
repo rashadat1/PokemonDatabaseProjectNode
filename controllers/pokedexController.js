@@ -102,7 +102,7 @@ const filterPokedex = async (req, res) => {
                 FROM
                     types t
                 WHERE
-                    $1 ILIKE t.type_name`,[q]);
+                    t.type_name ILIKE $1`,[q]);
             
             const moveResults = await db.query(
                 `SELECT
@@ -124,35 +124,70 @@ const filterPokedex = async (req, res) => {
                 FROM
                     abilities a
                 WHERE
-                    $1 ILIKE a.name`,[`%${q}%`]);
+                    a.name ILIKE $1`,[`%${q}%`]);
             
 
         } else if (moveMatch) {
             // if we have a move match let's filter to just show the pokemon that
             // can learn this move there will be two results arrays in this case 
             const pokemonResultsLevel = await db.query(
-                `SELECT
-                    distinct p.name, lbl.level_learned
+                `SELECT DISTINCT
+                    p.name,
+                    p.type,
+                    STRING_AGG(DISTINCT a.name, ', ') as abilities,
+                    p.hp,
+                    p.atk,
+                    p.def_val,
+                    p.spatk,
+                    p.spdef,
+                    p.spd,
+                    (p.hp + p.atk + p.def_val + p.spatk + p.spdef + p.spd) AS bst,
+                    lbl.level_learned
                 FROM 
                     pokedex p
+                LEFT JOIN
+                    pokemon_abilities pa ON p.id = pa.pokemon_id
                 LEFT JOIN
                     learned_by_leveling lbl on lbl.pokemon_id = p.id
                 LEFT JOIN
+                    abilities a ON a.id = pa.ability_id
+                LEFT JOIN
                     moves m on m.move_id = lbl.move_id
                 WHERE
-                    $1 ILIKE m.name`,[q]);
+                    m.name ILIKE $1
+                GROUP BY
+                    p.name, p.type, p.hp, p.atk, p.def_val, p.spatk, p.spdef, p.spd, lbl.level_learned
+                ORDER BY
+                    p.name`,[q]);
 
             const pokemonResultsTM = await db.query(
-                `SELECT
-                    distinct p.name, lbl.level_learned
+                `SELECT DISTINCT
+                    p.name,
+                    p.type,
+                    STRING_AGG(DISTINCT a.name, ', ') as abilities,
+                    p.hp,
+                    p.atk,
+                    p.def_val,
+                    p.spatk,
+                    p.spdef,
+                    p.spd,
+                    (p.hp + p.atk + p.def_val + p.spatk + p.spdef + p.spd) AS bst,
                 FROM 
                     pokedex p
+                LEFT JOIN
+                    pokemon_abilities pa ON pa.pokemon_id = p.id
                 LEFT JOIN
                     learned_by_tm lbt on lbt.pokemon_id = p.id
                 LEFT JOIN
                     moves m on m.move_id = lbt.move_id
+                LEFT JOIN
+                    abilities a ON a.id = pa.ability_id
                 WHERE
-                    $1 ILIKE m.name`,[q]);
+                    m.name ILIKE $1
+                GROUP BY
+                    p.name, p.type, p.hp, p.atk, p.def_val, p.spatk, p.spdef, p.spd
+                ORDER BY
+                    p.name`,[q]);
             
             const typeResults = await db.query(
                 `SELECT
@@ -160,7 +195,7 @@ const filterPokedex = async (req, res) => {
                 FROM
                     types t
                 WHERE
-                    $1 ILIKE t.type_name`,[`%${q}%`]);
+                    t.type_name ILIKE $1`,[`%${q}%`]);
                     
             const moveResults = await db.query(
                 `SELECT
@@ -182,8 +217,10 @@ const filterPokedex = async (req, res) => {
                 FROM
                     abilities a
                 WHERE
-                    $1 ILIKE a.name`,[`%${q}%`]);
-            // ability match condition here 
+                    a.name ILIKE $1`,[`%${q}%`]);
+                    
+        } else if (abilityMatch) {
+
         }
     }
 }
