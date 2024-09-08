@@ -100,6 +100,78 @@
   font-size: 1rem;
 }
 
+.pokedex-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Arial', sans-serif;
+}
+
+.search-bar-dynamic {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.search-bar-dynamic input {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px;
+  border-radius: 5px;
+  border: 2px solid #ccc;
+  font-size: 16px;
+}
+
+/* Search results styling */
+.search-results-dynamic {
+  margin-top: 20px;
+}
+
+/* Results tables */
+.results-table {
+  margin-bottom: 40px;
+}
+
+.results-table table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.results-table th, .results-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.results-table th {
+  background-color: #f4f4f4;
+  font-weight: bold;
+}
+
+/* Type icon styling */
+.results-table img {
+  width: 32px;
+  height: 32px;
+}
+
+/* Section Headers */
+.results-table h3 {
+  color: #333;
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+/* Styling for table rows */
+.results-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.results-table tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+
 .search-bar button {
   padding: 10px;
   font-size: 1rem;

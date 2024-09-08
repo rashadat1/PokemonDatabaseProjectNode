@@ -6,6 +6,7 @@ import Layout from './components/Layout';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import SearchResultsPage from './pages/SearchResultsPage';
+import PokedexPage from './pages/PokedexPage';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchResultsPage />} />
+          <Route path="/Pokedex" element={<PokedexPage />} />
         </Routes>
       </Layout>
     </Router>

@@ -1,9 +1,18 @@
-const db = require('../connections.db');
+const db = require('../connections/db');
 
 const filterPokedex = async (req, res) => {
     const { q } = req.query;
     const queryLength = q ? q.length : 0;
-    let response = {};
+    console.log('Received query:',q);
+    let response = {
+        pokemon: [],
+        moves: [],
+        abilities: [],
+        types: [],
+        typeMatch: null,
+        abilityMatch: null,
+        moveMatch: null,
+    };
     
     
     // show all pokemon and join their abilities so we can see all pokemon with their game info
@@ -29,7 +38,7 @@ const filterPokedex = async (req, res) => {
     // if the length of the query is <= 2 then we should append the query to search for
     // pokemon starting with these letters
     let whereClause = '';
-    let queryParams = '';
+    let queryParams = [];
     let havingClause = '';
     let additionalJoins = '';
     // for queryLength 1 or 2 we filter pokemon to just show pokemon whose names begin with
@@ -52,6 +61,8 @@ const filterPokedex = async (req, res) => {
         if (typeMatch) {
             whereClause = `WHERE $1 ILIKE ANY(p.type)`
             queryParams = [q];
+            response.typeMatch = typeMatch.type_name;
+
         } else if (moveMatch) {
             additionalJoins =
                 `LEFT JOIN
@@ -62,57 +73,49 @@ const filterPokedex = async (req, res) => {
                     moves m on m.move_id = lbl.move_id OR m.move_id = lbt.move_id`;
             whereClause = `WHERE m.name ILIKE $1`;
             queryParams = [q];
+            response.moveMatch = moveMatch.name;
 
         } else if (abilityMatch) {
             havingClause = 
                 `HAVING
                     BOOL_OR(a.name ILIKE $1) = TRUE`;
             queryParams = [q];
+            response.abilityMatch = abilityMatch.name;
+
         } else {
-            const pokemonResults = await db.query(
-                `${baseQuery}
-                WHERE 
-                    p.name ILIKE $1
-                GROUP BY
-                    p.name, p.type, p.hp, p.atk, p.def_val, p.spatk, p.spdef, p.spd
-                ORDER BY
-                    p.name`,[`%${q}%`]);
-            
-            const moveResults = await db.query(
-                `SELECT
-                    m.name,
-                    m.element,
-                    m.category,
-                    m.power,
-                    m.accuracy,
-                    m.pp
-                FROM
-                    moves m
-                WHERE
-                    m.name ILIKE $1`,[`%${q}%`]);
-            
-            const abilityResults = await db.query(
-                `SELECT
-                    a.name,
-                    a.description,
-                    a.num_holders
-                FROM
-                    abilities a
-                WHERE
-                    a.name ILIKE $1`,[`%${q}%`]);
-            
-            const typeResults = await db.query(`SELECT type_name FROM types WHERE type_name ILIKE $1`,[`%${q}%`]);
-
-            response = {
-                pokemon: pokemonResults.rows,
-                moves: moveResults.rows,
-                abilities: abilityResults.rows,
-                types: typeResults.rows
-            };
-
-            return res.json(response);
+            whereClause = `WHERE p.name ILIKE $1`;
+            queryParams = [`${q}%`]
         }
+        const moveResults = await db.query(
+            `SELECT
+                m.name,
+                m.element,
+                m.category,
+                m.power,
+                m.accuracy,
+                m.pp
+            FROM
+                moves m
+            WHERE
+                m.name ILIKE $1`,[`%${q}%`]);
+            
+        const abilityResults = await db.query(
+            `SELECT
+                a.name,
+                a.description,
+                a.num_holders
+            FROM
+                abilities a
+            WHERE
+                a.name ILIKE $1`,[`%${q}%`]);
+            
+        const typeResults = await db.query(`SELECT type_name FROM types WHERE type_name ILIKE $1`,[`%${q}%`]);
+
+        response.moves = moveResults.rows;
+        response.abilities = abilityResults.rows;
+        response.types = typeResults.rows;
     }
+
     const query = 
         `${baseQuery}
         ${additionalJoins}
@@ -122,8 +125,11 @@ const filterPokedex = async (req, res) => {
         ${havingClause}
         ORDER BY
             p.name`;
-    
+
     const pokemonResults = await db.query(query, queryParams);
-    response = { pokemon: pokemonResults.rows };
+    response.pokemon = pokemonResults.rows;
+    console.log(response);
     return res.json(response);
 }
+
+module.exports = { filterPokedex };
