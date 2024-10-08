@@ -7,6 +7,7 @@ import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import SearchResultsPage from './pages/SearchResultsPage';
 import PokedexPage from './pages/PokedexPage';
+import PokemonPage from './pages/PokemonPage';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/Pokedex" element={<PokedexPage />} />
+          <Route path="/pokemon/:pokemon_name" element={<PokemonPage />} />
         </Routes>
       </Layout>
     </Router>

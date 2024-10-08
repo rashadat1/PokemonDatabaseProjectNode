@@ -3,6 +3,7 @@ import axios from 'axios';
 import { fetchTypeList, fetchTypeDetails } from '../utils/fetchTypeDetails';
 import pokemonMap from '../utils/pokemonMap.json';
 import '../App.css';
+import { Link } from 'react-router-dom';
 
 const getSpriteURL = (pokemonName) => {
     const lowerCaseName = pokemonName.toLowerCase()
@@ -57,7 +58,7 @@ const DynamicSearchBar = ({ initialQuery }) => {
     useEffect(() => {
         const fetchResults = async () => {
             try {
-                // fetch all pokemon if query empty
+                // fetch all pokemon if query empty, otherwise filter by 'query'
                 const response = await axios.get(`http://localhost:3000/api/pokedex/pokeFilter?q=${query}`);
                 setResults(response.data);
                 console.log('Fetched results: ',response.data);
@@ -69,10 +70,11 @@ const DynamicSearchBar = ({ initialQuery }) => {
     },[query]);
 
     useEffect(() => {
+        // get Type sprites
         fetchTypeList().then(types => {
             types.forEach(async type => {
                 const sprite = await fetchTypeDetails(type.url);
-                setTypeDetails(prev => ({ ...prev, [type.name]: sprite}));
+                setTypeDetails(prev => ({ ...prev, [type.name]: sprite }));
             });
         })
         console.log(typeDetails);
@@ -213,13 +215,19 @@ const DynamicSearchBar = ({ initialQuery }) => {
                                 {results.pokemon.map((pokemon,index) => (
                                     <tr key={index}>
                                         <td>
-                                            <img
-                                                src={getSpriteURL(pokemon.pokemon_name)}
-                                                alt={pokemon.pokemon_name}
-                                                style={{ width: '64px', height: '64px'}}
-                                            />
+                                            <Link to={`/pokemon/${pokemon.pokemon_name.toLowerCase()}`}>
+                                                <img
+                                                    src={getSpriteURL(pokemon.pokemon_name)}
+                                                    alt={pokemon.pokemon_name}
+                                                    style={{ width: '64px', height: '64px'}}
+                                                />
+                                            </Link>
                                         </td>
-                                        <td>{pokemon.pokemon_name}</td>
+                                        <td>
+                                            <Link to={`/pokemon/${pokemon.pokemon_name.toLowerCase()}`}>
+                                                {pokemon.pokemon_name}
+                                            </Link>
+                                        </td>
                                         <td>{pokemon.type.map((type, index) => (
                                             <img
                                                 key={index}

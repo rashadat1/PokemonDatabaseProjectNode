@@ -394,3 +394,60 @@
   color: #555;
   margin-bottom: 20px;
 }
+
+.pokemon-details-container {
+  max-width: 800px;
+  margin: auto;
+  padding: 20px;
+  text-align: left;
+  border-radius: 10px;
+  border-color: #0044cc;
+
+}
+
+.play-cry-button {
+  margin-top: 10px;
+  padding: 8px 16px;
+  border: none;
+  background-color: #0044cc;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  display: block;
+  width: 150px;
+}
+
+.pokemon-image-container {
+  flex: 1;
+  margin-right: 20px;
+}
+
+.pokemon-image {
+  width: 150px;
+  margin-bottom: 5px;
+  border-radius: 10px;
+  border-color: #0044cc;
+  border: 5px solid #ddd;
+  padding: 10px;
+}
+
+.pokemon-name {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+}
+
+.pokemon-info {
+
+}
+
+.pokemon-stats {
+
+}
+
+.pokemon-abilities {
+
+}
+
+.pokemon-moves {
+
+}

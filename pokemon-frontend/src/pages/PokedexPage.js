@@ -1,5 +1,4 @@
 import DynamicSearchBar from "../components/DynamicSearchBar";
-
 import React from 'react'
 
 const PokedexPage = () => {
