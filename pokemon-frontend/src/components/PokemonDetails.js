@@ -2,6 +2,7 @@ import axios from "axios";
 import { useState, useEffect } from 'react';
 import { useParams } from "react-router-dom";
 import { fetchTypeList, fetchTypeDetails } from '../utils/fetchTypeDetails';
+import PokemonStats from './PokemonStats';
 
 const PokemonDetails = () => {
     const { pokemon_name } = useParams();
@@ -29,17 +30,6 @@ const PokemonDetails = () => {
     },[pokemon_name]); // rerun effect when pokemon_name changes
 
     useEffect(() => {
-        // get Type sprites
-        fetchTypeList().then(types => {
-            types.forEach(async type => {
-                const sprite = await fetchTypeDetails(type.url);
-                setTypeDetails(prev => ({ ...prev, [type.name]: sprite }));
-            });
-        })
-        console.log(typeDetails);
-    }, []);
-
-    useEffect(() => {
         const fetchPokemonSummary = async () => {
             try {
                 console.log('Sending request to backend for summary data');
@@ -53,9 +43,21 @@ const PokemonDetails = () => {
         fetchPokemonSummary();
     },[pokemon_name])
 
+    useEffect(() => {
+        // get Type sprites
+        fetchTypeList().then(types => {
+            types.forEach(async type => {
+                const sprite = await fetchTypeDetails(type.url);
+                console.log(`Fetched sprite for ${type.name}: `, sprite);
+                setTypeDetails(prev => ({ ...prev, [type.name]: sprite }));
+            });
+        console.log('Type sprite URLs successfully retrieves: ',typeDetails);
+        })
+    }, []);
+
     return (
         <div className="pokemon-details-container">
-            {pokemonData ? (
+            {pokemonData && Object.keys(typeDetails).length > 0 ? (
                 <>
                     <div className="pokemon-basic-summary-container">
                         <h1 className="pokemon-name">{"No." + pokemonData.id + ' ' + pokemonData.name.charAt(0).toUpperCase() + pokemonData.name.slice(1)}</h1>
@@ -65,18 +67,25 @@ const PokemonDetails = () => {
                                 <button className="play-cry-button">Play Cry</button>
                             </div>
                             <div className="pokemon-info">
-                                <p><strong>Type:{' ' + pokemonSummary.types.join(' ')}</strong></p>
+                                <p><strong>Type:</strong>{pokemonSummary.types.map((type, index) => (
+                                    <img 
+                                        key={index}
+                                        src={typeDetails[type.toLowerCase()]}
+                                        alt={type}
+                                        style={{ width: '50px', height: '20px'}}
+                                    />
+                                ))}</p>
                                 <p><strong>Entry:</strong>{' ' + pokemonSummary.entry}</p>
                                 <p><strong>Height:</strong>{' ' + pokemonData.height / 10 + ' m'}</p>
                                 <p><strong>Weight:</strong>{' ' + pokemonData.weight / 10 + ' kg'}</p>
                                 <p><strong>Abilities:</strong>{' ' + pokemonData.abilities.map(ability => ability.ability.name.split(/[- ]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')).join(' / ')}</p>
                                 <p><strong>Held Items:</strong>{pokemonData.held_items.length > 0 ? ' ' + pokemonData.held_items.map(item => item.item.name.split(/[- ]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')).join(' / '): " None"}</p>
                                 <p><strong>Base Experience:</strong>{' ' + pokemonData.base_experience}</p>
-                                <p><strong>EV Yield:{' ' + pokemonData.stats.map(stat => stat.effort !== 0 ? '+' + stat.effort + ' ' + stat.stat.name.split(/[-]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : "").join('')}</strong></p>
+                                <p><strong>EV Yield:</strong>{pokemonData.stats.map(stat => stat.effort !== 0 ? ' +' + stat.effort + ' ' + stat.stat.name.split(/[-]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : "").join('')}</p>
                             </div>
                         </div>
                     </div>
-
+                <PokemonStats stats={pokemonData.stats} />
 
                 </>
             ) : (
