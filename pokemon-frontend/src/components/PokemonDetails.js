@@ -7,6 +7,12 @@ const PokemonDetails = () => {
     const { pokemon_name } = useParams();
     const [pokemonData, setPokemonData] = useState(null);
     const [typeDetails, setTypeDetails] = useState({});
+    const [pokemonSummary, setPokemonSummary] = useState(
+        {
+            types: [], 
+            entry: null
+        }
+    );
 
     useEffect(() => {
         const fetchPokemonData = async () => {
@@ -33,26 +39,41 @@ const PokemonDetails = () => {
         console.log(typeDetails);
     }, []);
 
+    useEffect(() => {
+        const fetchPokemonSummary = async () => {
+            try {
+                console.log('Sending request to backend for summary data');
+                const response = await axios.get(`http://localhost:3000/api/pokedex/pokemonSummary?pokemon_name=${pokemon_name}`);
+                setPokemonSummary(response.data);
+                console.log(response);
+            } catch (error) {
+                console.log('Error occurred while fetching Pokedex summary: ',error);
+            }
+        };
+        fetchPokemonSummary();
+    },[pokemon_name])
+
     return (
         <div className="pokemon-details-container">
             {pokemonData ? (
                 <>
                     <div className="pokemon-basic-summary-container">
                         <h1 className="pokemon-name">{"No." + pokemonData.id + ' ' + pokemonData.name.charAt(0).toUpperCase() + pokemonData.name.slice(1)}</h1>
-                        <div className="pokemon-image-container">
-                            <img className="pokemon-image" src={pokemonData.sprites.front_default} alt={pokemonData.name}/>
-                            <button className="play-cry-button">Play Cry</button>
-                        </div>
-                        <div className="pokemon-info">
-                            <p><strong>Type:</strong></p>
-                            <p><strong>Entry:</strong></p>
-                            <p><strong>Height:</strong>{' ' + pokemonData.height}</p>
-                            <p><strong>Weight:</strong>{' ' + pokemonData.weight}</p>
-                            <p><strong>Abilities:</strong></p>
-                            <p><strong>Held Items:</strong></p>
-                            <p><strong>Base Experience:</strong>{' ' + pokemonData.base_experience}</p>
-                            <p><strong>EV Yield:</strong></p>
-
+                        <div className="pokemon-summary">
+                            <div className="pokemon-image-container">
+                                <img className="pokemon-image" src={pokemonData.sprites.front_default} alt={pokemonData.name}/>
+                                <button className="play-cry-button">Play Cry</button>
+                            </div>
+                            <div className="pokemon-info">
+                                <p><strong>Type:{' ' + pokemonSummary.types.join(' ')}</strong></p>
+                                <p><strong>Entry:</strong>{' ' + pokemonSummary.entry}</p>
+                                <p><strong>Height:</strong>{' ' + pokemonData.height / 10 + ' m'}</p>
+                                <p><strong>Weight:</strong>{' ' + pokemonData.weight / 10 + ' kg'}</p>
+                                <p><strong>Abilities:</strong>{' ' + pokemonData.abilities.map(ability => ability.ability.name.split(/[- ]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')).join(' / ')}</p>
+                                <p><strong>Held Items:</strong>{pokemonData.held_items.length > 0 ? ' ' + pokemonData.held_items.map(item => item.item.name.split(/[- ]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')).join(' / '): " None"}</p>
+                                <p><strong>Base Experience:</strong>{' ' + pokemonData.base_experience}</p>
+                                <p><strong>EV Yield:{' ' + pokemonData.stats.map(stat => stat.effort !== 0 ? '+' + stat.effort + ' ' + stat.stat.name.split(/[-]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : "").join('')}</strong></p>
+                            </div>
                         </div>
                     </div>
 

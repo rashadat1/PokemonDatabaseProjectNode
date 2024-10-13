@@ -1,9 +1,34 @@
 const db = require('../connections/db');
 
+const pokemonSummary = async (req, res) => {
+    console.log('Received query to send Pokemon summary')
+    // name has to match name in route after ?
+    const { pokemon_name } = req.query;
+    console.log(pokemon_name);
+    let response = {
+        entry: null,
+        types: []
+    }
+    const query = 
+        `SELECT
+            p.entry,
+            p.type
+        FROM
+            Pokedex p
+        WHERE
+            p.name ILIKE $1`;
+
+    const results = await db.query(query,[`${pokemon_name}%`])
+    response.entry = results.rows[0].entry;
+    response.types = results.rows[0].type;
+    console.log(response);
+    return res.json(response);
+}
+
 const filterPokedex = async (req, res) => {
     const { q } = req.query;
     const queryLength = q ? q.length : 0;
-    console.log('Received query:',q);
+    //console.log('Received query:',q);
     let response = {
         pokemon: [],
         moves: [],
@@ -128,8 +153,8 @@ const filterPokedex = async (req, res) => {
 
     const pokemonResults = await db.query(query, queryParams);
     response.pokemon = pokemonResults.rows;
-    console.log(response);
+    //console.log(response);
     return res.json(response);
 }
 
-module.exports = { filterPokedex };
+module.exports = { filterPokedex, pokemonSummary };
