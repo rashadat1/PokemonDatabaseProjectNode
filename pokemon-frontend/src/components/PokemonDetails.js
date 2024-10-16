@@ -45,15 +45,23 @@ const PokemonDetails = () => {
 
     useEffect(() => {
         // get Type sprites
-        fetchTypeList().then(types => {
-            types.forEach(async type => {
-                const sprite = await fetchTypeDetails(type.url);
-                console.log(`Fetched sprite for ${type.name}: `, sprite);
-                setTypeDetails(prev => ({ ...prev, [type.name]: sprite }));
-            });
-        console.log('Type sprite URLs successfully retrieves: ',typeDetails);
-        })
-    }, []);
+        (async function fetchTypeSprites() {
+            const types = await fetchTypeList();
+            console.log("Types fetched:", types);
+
+            for (const type of types) {
+                console.log(type);
+                try {
+                    const sprite = await fetchTypeDetails(type.url);
+                    console.log(sprite);
+
+                    setTypeDetails(prev => ({ ...prev, [type.name]: sprite }));
+                } catch (error) {
+                    console.error(`Error fetching sprite for ${type.name}`,error);
+                }
+            }
+        })();
+    }, [pokemon_name]);
 
     return (
         <div className="pokemon-details-container">

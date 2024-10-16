@@ -9,8 +9,10 @@ export const fetchTypeList = async() => {
 export const fetchTypeDetails = async(typeurl) => {
     // takes the url to the type as an argument and gets the picture for this located in the JSON
     // returned at the request endpoint
-    const response = await axios.get(`${typeurl}`);
-    const spriteURL = response.data.sprites['generation-vii']['ultra-sun-ultra-moon'].name_icon;
+    const parts = typeurl.split('/');
+    const type_id = parts[parts.length-2];
+    console.log(type_id);
+    const spriteURL = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-vii/ultra-sun-ultra-moon/${type_id}.png`
     return spriteURL;
 }
 
