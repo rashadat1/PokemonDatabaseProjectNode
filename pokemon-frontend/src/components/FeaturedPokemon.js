@@ -17,7 +17,7 @@ const FeaturedPokemon = () => {
                 {featured.map(pokemon => (
                     <div key={pokemon.id} className="pokemon-card">
                         <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonMap[pokemon.name.toLowerCase()]}.png`} />
-                        <h3>{pokemon.name}</h3>
+                        <h4>{pokemon.name}</h4>
                         <p>{pokemon.description}</p>
                     </div>
                 ))}

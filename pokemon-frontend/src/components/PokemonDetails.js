@@ -3,9 +3,11 @@ import { useState, useEffect } from 'react';
 import { useParams } from "react-router-dom";
 import { fetchTypeList, fetchTypeDetails } from '../utils/fetchTypeDetails';
 import PokemonStats from './PokemonStats';
+import PokemonMoves from "./PokemonMoves";
 
 const PokemonDetails = () => {
     const { pokemon_name } = useParams();
+    const [cleanedName, setCleanedName] = useState(null);
     const [pokemonData, setPokemonData] = useState(null);
     const [typeDetails, setTypeDetails] = useState({});
     const [pokemonSummary, setPokemonSummary] = useState(
@@ -14,12 +16,46 @@ const PokemonDetails = () => {
             entry: null
         }
     );
+    const [categorizedMoves, setCategorizedMoves] = useState({
+        level_up: [],
+        egg_moves: [],
+        move_tutor: [],
+        machine: []
+    })
 
     useEffect(() => {
+        const processNames = () => {
+            try {
+                const lowerCaseName = pokemon_name.toLowerCase();
+                let cleanedName = lowerCaseName;
+
+                if (lowerCaseName.includes('alolan')) {
+                    cleanedName = cleanedName.replace('-','').replace('%20','').replace('alolan','').trim();
+                    cleanedName =  `${cleanedName}-alola`;
+                } else if (lowerCaseName.includes('galarian')) {
+                    cleanedName = cleanedName.replace('-','').replace('%20','').replace('galarian','').trim();
+                    cleanedName = `${cleanedName}-galar`;
+                } else if (lowerCaseName.includes('hisuian')) {
+                    cleanedName = cleanedName.replace('-','').replace('%20','').replace('hisuian','').trim();
+                    cleanedName = `${cleanedName}-hisui`;
+                };
+                setCleanedName(cleanedName);
+
+            } catch (error) {
+                console.error(`Error updating pokemon_name`, error);
+            }
+
+        };
+        processNames();
+    },[pokemon_name]);
+
+    useEffect(() => {
+        if (!cleanedName) return;
         const fetchPokemonData = async () => {
             try {
-                console.log("Sending request with pokemon_name:",pokemon_name)
-                const response = await axios.get(`https://pokeapi.co/api/v2/pokemon/${pokemon_name}/`);
+
+                console.log("Sending request with pokemon_name:",cleanedName)
+                const response = await axios.get(`https://pokeapi.co/api/v2/pokemon/${cleanedName}/`);
                 setPokemonData(response.data);
                 console.log("Pokemon Data JSON:",response.data)
             } catch (error) {
@@ -27,23 +63,28 @@ const PokemonDetails = () => {
             }
         };
         fetchPokemonData();
-    },[pokemon_name]); // rerun effect when pokemon_name changes
+    },[cleanedName]); // rerun effect when pokemon_name changes
 
     useEffect(() => {
+        if (!cleanedName) return;
         const fetchPokemonSummary = async () => {
             try {
                 console.log('Sending request to backend for summary data');
-                const response = await axios.get(`http://localhost:3000/api/pokedex/pokemonSummary?pokemon_name=${pokemon_name}`);
-                setPokemonSummary(response.data);
-                console.log(response);
+                if (!(cleanedName.includes('alola') || cleanedName.includes('galar') || cleanedName.includes('hisui'))) {
+                    const response = await axios.get(`http://localhost:3000/api/pokedex/pokemonSummary?pokemon_name=${cleanedName}`);
+                    setPokemonSummary(response.data);
+                    console.log(response);
+                } 
+
             } catch (error) {
                 console.log('Error occurred while fetching Pokedex summary: ',error);
             }
         };
         fetchPokemonSummary();
-    },[pokemon_name])
+    },[cleanedName])
 
     useEffect(() => {
+        if (!cleanedName) return;
         // get Type sprites
         (async function fetchTypeSprites() {
             const types = await fetchTypeList();
@@ -61,11 +102,80 @@ const PokemonDetails = () => {
                 }
             }
         })();
-    }, [pokemon_name]);
+    }, [cleanedName]);
+
+    useEffect(() => {
+        if (!cleanedName) return;
+        const fetchPokemonMoves = async () => {
+            try {
+                const response = await axios.get(`https://pokeapi.co/api/v2/pokemon/${cleanedName.toLowerCase()}/`);
+                console.log('Response received from retrieving pokemon move data: ',response.data);
+                const moveList = response.data.moves;
+                console.log("Moves this pokemon can learn: ",moveList);
+
+                // Filter moves that have scarlet-violet in the version group
+                const filteredMoves = moveList.filter(moveData => 
+                    moveData.version_group_details.some(version_details => (
+                        version_details.version_group.name === "scarlet-violet"))
+                );
+                
+                const moveInfoPromise = filteredMoves.map(async (moveData) => {
+                    const moveResponse = await axios.get(moveData.move.url);
+                    const moveDataResponse = moveResponse.data;
+
+                    const versionDetail = moveData.version_group_details.find(
+                        version_details => version_details.version_group.name === "scarlet-violet");
+                    
+                    const learn_method = versionDetail.move_learn_method.name;
+                    const level_learned_at = versionDetail.level_learned_at;
+                    const typeSprite = await fetchTypeDetails(moveDataResponse.type.url);
+
+                    const descriptionEntry = moveDataResponse.effect_entries?.find(entry => entry.language.name === 'en');
+                    const description = descriptionEntry ? descriptionEntry.short_effect : 'No description available';
+                    
+                    return {
+                        name: moveDataResponse.name || '--',
+                        power: moveDataResponse.power || '--',
+                        accuracy: moveDataResponse.accuracy || '--',
+                        pp: moveDataResponse.pp || '--',
+                        type: typeSprite || 'Type Missing', 
+                        description: description || 'Placeholder',
+                        damageClass: moveDataResponse.damage_class.name || 'Placeholder',
+                        level_learned: level_learned_at || 0,
+                        method: learn_method || 'Unknown'
+                    };
+                });
+                // wait to resolve promises for all a pokemon's learned move
+                const moveInfo = await Promise.all(moveInfoPromise);
+                // categorize moves based on method
+                const levelUpMoves = moveInfo.filter(move => move.method === 'level-up');
+                const sortedLevelUpMoves = levelUpMoves.sort((a,b) => a.level_learned - b.level_learned);
+
+                const eggMoves = moveInfo.filter(move => move.method === 'egg');
+                const moveTutorMoves = moveInfo.filter(move => move.method === 'tutor');
+                const machineMoves = moveInfo.filter(move => move.method === 'machine');
+
+                setCategorizedMoves(
+                    {
+                        level_up: sortedLevelUpMoves,
+                        egg_moves: eggMoves,
+                        move_tutor: moveTutorMoves,
+                        machine: machineMoves
+                    }
+                );
+                console.log(categorizedMoves);
+                // need to call another API endpoint to get move data this just gets the list
+            } catch (error) {
+                console.error('Error fetching move data',error);
+            }
+        };
+        fetchPokemonMoves(cleanedName);
+
+    }, [cleanedName]);
 
     return (
         <div className="pokemon-details-container">
-            {pokemonData && Object.keys(typeDetails).length > 0 ? (
+            {pokemonData && Object.keys(typeDetails).length > 0 && Object.keys(categorizedMoves).length > 0 ? (
                 <>
                     <div className="pokemon-basic-summary-container">
                         <h1 className="pokemon-name">{"No." + pokemonData.id + ' ' + pokemonData.name.charAt(0).toUpperCase() + pokemonData.name.slice(1)}</h1>
@@ -94,6 +204,7 @@ const PokemonDetails = () => {
                         </div>
                     </div>
                 <PokemonStats stats={pokemonData.stats} />
+                <PokemonMoves categorizedMoves={ categorizedMoves } />
 
                 </>
             ) : (

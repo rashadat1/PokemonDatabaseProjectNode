@@ -11,7 +11,6 @@ export const fetchTypeDetails = async(typeurl) => {
     // returned at the request endpoint
     const parts = typeurl.split('/');
     const type_id = parts[parts.length-2];
-    console.log(type_id);
     const spriteURL = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-vii/ultra-sun-ultra-moon/${type_id}.png`
     return spriteURL;
 }
