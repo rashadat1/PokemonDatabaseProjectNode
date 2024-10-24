@@ -115,15 +115,23 @@ CREATE TABLE IF NOT EXISTS ITEMS (
     name VARCHAR(100) NOT NULL,
     description TEXT,
     cost INT,
-    fling_power INT,
-    healing
-    ailment_heal
     is_consumable BOOLEAN,
     is_usable_in_battle BOOLEAN,
     is_holdable BOOLEAN
-
-
 )
+-- Poke Ball Table
+CREATE TABLE IF NOT EXISTS POKEBALLS (
+    item_id INT REFERENCES ITEMS(id) ON DELETE CASCADE,
+    catch_rate_multiplier DECIMAL(1,2)
+);
+-- Medicine Table
+CREATE TABLE IF NOT EXISTS MEDICINE (
+    item_id INT REFERENCES ITEMS(id) ON DELETE CASCADE,
+    hp_restored INT, -- e.g. super potion restores 50 HP
+    status_cure BOOLEAN DEFAULT FALSE -- if can cure status conditions
+)
+-- Stat Boosting Item Table
+CREATE TABLE IF NOT EXISTS 
 -- Locations Table
 
 
