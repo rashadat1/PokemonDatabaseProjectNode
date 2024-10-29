@@ -83,7 +83,7 @@ class ETL {
     async processData() {
         const url = this.getEndpoint();
         const rawData = await this.fetchData(url);
-        const transformedData = this.transformData(rawData);
+        const transformedData = await this.transformData(rawData);
         await this.upsertData(transformedData);
     }
 }
