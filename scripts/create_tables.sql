@@ -1,4 +1,6 @@
 -- Pokedex Table
+BEGIN;
+
 CREATE TABLE IF NOT EXISTS POKEDEX (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -76,7 +78,7 @@ CREATE TABLE IF NOT EXISTS EV_YIELD (
 -- Types Table
 CREATE TABLE IF NOT EXISTS TYPES (
     id SERIAL PRIMARY KEY,
-    type_name VARCHAR(50) NOT NULL,
+    type_name VARCHAR(50) NOT NULL
 );
 -- Type Interactions Table
 CREATE TABLE IF NOT EXISTS TYPE_INTERACTIONS (
@@ -107,7 +109,7 @@ CREATE TABLE IF NOT EXISTS POKEMON_ABILITIES (
 -- Pokemon Move Learn Methods Table
 CREATE TABLE IF NOT EXISTS LEARN_METHODS (
     id SERIAL PRIMARY KEY,
-    method_name VARCHAR(100) NOT NULL,
+    method_name VARCHAR(100) NOT NULL
 );
 -- Items Table
 CREATE TABLE IF NOT EXISTS ITEMS (
@@ -118,23 +120,61 @@ CREATE TABLE IF NOT EXISTS ITEMS (
     is_consumable BOOLEAN,
     is_usable_in_battle BOOLEAN,
     is_holdable BOOLEAN
-)
+);
 -- Poke Ball Table
 CREATE TABLE IF NOT EXISTS POKEBALLS (
     item_id INT REFERENCES ITEMS(id) ON DELETE CASCADE,
-    catch_rate_multiplier DECIMAL(1,2)
+    catch_rate_multiplier DECIMAL(1,2),
+    PRIMARY KEY (item_id)
 );
 -- Medicine Table
 CREATE TABLE IF NOT EXISTS MEDICINE (
     item_id INT REFERENCES ITEMS(id) ON DELETE CASCADE,
     hp_restored INT, -- e.g. super potion restores 50 HP
-    status_cure BOOLEAN DEFAULT FALSE -- if can cure status conditions
-)
+    status_cure BOOLEAN DEFAULT FALSE, -- if can cure status conditions
+    PRIMARY KEY (item_id)
+);
 -- Stat Boosting Item Table
-CREATE TABLE IF NOT EXISTS 
+CREATE TABLE IF NOT EXISTS STAT_BOOSTING_ITEMS (
+    item_id INT REFERENCES ITEMS(id) ON DELETE CASCADE,
+    stat_name VARCHAR(50),
+    multiplier DECIMAL(3,2),
+    PRIMARY KEY (item_id)
+);
+-- PP Recovery Table
+CREATE TABLE IF NOT EXISTS PP_RECOVERY_ITEMS (
+    item_id INT REFERENCES ITEMS(id) ON DELETE CASCADE,
+    pp_restored INT,
+    PRIMARY KEY (item_id)
+);
+-- Status-Cure Items Table
+CREATE TABLE IF NOT EXISTS STATUS_CURE_ITEMS (
+    item_id INT REFERENCES ITEMS(id) ON DELETE CASCADE,
+    ailment_cured VARCHAR(50),
+    PRIMARY KEY (item_id)
+);
 -- Locations Table
-
-
+CREATE TABLE IF NOT EXISTS LOCATIONS (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    region VARCHAR(50) NOT NULL
+);
+-- Location Areas Table
+CREATE TABLE IF NOT EXISTS LOCATION_AREAS (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    location_ID INT REFERENCES LOCATIONS(id) ON DELETE CASCADE
+);
+-- Location Area Encounters Table
+CREATE TABLE IF NOT EXISTS LOCATION_AREA_ENCOUNTERS (
+    location_area_id INT REFERENCES LOCATION_AREAS(id) ON DELETE CASCADE,
+    pokemon_id INT REFERENCES POKEDEX(id) ON DELETE CASCADE,
+    encounter_method VARCHAR(50) NOT NULL,
+    min_level INT NOT NULL, -- min level pokemon found at
+    max_level INT NOT NULL, -- max level pokemon found at
+    chance INT NOT NULL, -- percentage chance of encounter
+    PRIMARY KEY (location_area_id, pokemon_id, encounter_method)
+);
 -- Learnsets Table
 CREATE TABLE IF NOT EXISTS LEARNSETS (
     pokemon_id INT REFERENCES POKEDEX(id) ON DELETE CASCADE,
@@ -164,3 +204,14 @@ CREATE TABLE IF NOT EXISTS EVOLUTIONS (
     turn_upside_down BOOLEAN,
     PRIMARY KEY (pokemon_id_from, pokemon_id_to)
 );
+-- create indices for Learnsets and Location Area Encounters tables
+-- these will both be quite large as they are many-to-many with a lot of keys
+CREATE INDEX idx_learnsets_pokemon_id ON LEARNSETS(pokemon_id);
+CREATE INDEX idx_learnsets_move_id ON LEARNSETS(move_id);
+CREATE INDEX idx_learnsets_learn_method_id ON LEARNSETS(learn_method_id);
+
+CREATE INDEX idx_location_area_encounters_location_area_id ON LOCATION_AREA_ENCOUNTERS(location_area_id);
+CREATE INDEX idx_location_area_encounters_pokemon_id ON LOCATION_AREA_ENCOUNTERS(pokemon_id);
+CREATE INDEX idx_location_area_encounters_encounter_method ON LOCATION_AREA_ENCOUNTERS(encounter_method);
+
+COMMIT;
