@@ -2,7 +2,7 @@
 BEGIN;
 
 CREATE TABLE IF NOT EXISTS POKEDEX (
-    id SERIAL PRIMARY KEY,
+    id INT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     url VARCHAR(150) NOT NULL,
     stat_total INT NOT NULL,
@@ -21,13 +21,13 @@ CREATE TABLE IF NOT EXISTS POKEDEX (
 );
 -- Abiities Table
 CREATE TABLE IF NOT EXISTS ABILITIES (
-    id SERIAL PRIMARY KEY,
+    id INT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT
 );
 -- Moves Table
 CREATE TABLE IF NOT EXISTS MOVES (
-    id SERIAL PRIMARY KEY,
+    id INT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT,
     power INT,
@@ -43,15 +43,19 @@ CREATE TABLE IF NOT EXISTS MOVES (
     min_hits INT, -- min num hits for multi hit move
     max_turns INT, -- max num turns of multi turn effect
     min_turns INT, -- min num turns of multi turn effect
-    target VARCHAR(50) -- user, selected target, all enemies, all other pokemon
+    target VARCHAR(50), -- user, selected target, all enemies, all other pokemon
+    has_ailment BOOLEAN,
+    has_stat_change BOOLEAN
 );
 -- Ailment Table
 CREATE TABLE IF NOT EXISTS AILMENTS (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
-    damage INT,
+    damage DECIMAL,
     stat_effected VARCHAR(50),
-    stat_change INT
+    stat_change INT,
+    min_turns INT DEFAULT NULL,
+    max_turns INT DEFAULT NULL
 );
 -- Move Stat Change Table
 CREATE TABLE IF NOT EXISTS MOVE_STAT_CHANGE (
@@ -113,7 +117,7 @@ CREATE TABLE IF NOT EXISTS LEARN_METHODS (
 );
 -- Items Table
 CREATE TABLE IF NOT EXISTS ITEMS (
-    id SERIAL PRIMARY KEY,
+    id INT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT,
     cost INT,
@@ -155,13 +159,13 @@ CREATE TABLE IF NOT EXISTS STATUS_CURE_ITEMS (
 );
 -- Locations Table
 CREATE TABLE IF NOT EXISTS LOCATIONS (
-    id SERIAL PRIMARY KEY,
+    id INT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     region VARCHAR(50) NOT NULL
 );
 -- Location Areas Table
 CREATE TABLE IF NOT EXISTS LOCATION_AREAS (
-    id SERIAL PRIMARY KEY,
+    id INT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     location_ID INT REFERENCES LOCATIONS(id) ON DELETE CASCADE
 );

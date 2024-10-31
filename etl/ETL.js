@@ -6,11 +6,13 @@ steps - some methods might be concrete others might be abstract
 */
 
 class ETL {
-    constructor(pool, tableName) {
+    constructor(pool, tableNam, junctionTables = []) {
         // database connection pool 
         this.pool = pool;
         // database table 
         this.tableName = tableName;
+        // extra junction tables as parameters
+        this.junctionTables = junctionTables;
     }
 
     // retry logic utility function
@@ -36,31 +38,19 @@ class ETL {
     }
 
     // Upsert data into the database 
-    async upsertData(dataBuilder) {
+    async upsertData(data) {
         const client = await this.pool.connect();
         try {
-            // data is the actual data to be inserted or updated in the table
-            // columns is the column names for the table
-            // conflictConlumn - if there's a conflict an update is performed instead of insert (like primary key)
-            const { data, columns, conflictColumn } = dataBuilder.build();
-            // loop through columns and create placeholders based on index i
-            // result is a string like $1, $2, $3, ... 
-            const placeholders = columns.map((_, i) => `$${i + 1}`).join(', ');
-            // use map to iterate over each column name creating an instruction
-            // like column_name = EXCLUDED.column_name
-            // EXCLUDED is a keyword that refers to the values that would have been inserted if no conflict occurred
-            const updates = columns.map((col) => `${col} = EXCLUDED.${col}`).join(', ');
-            // this query inserts the data into the table checking for conflicts in the conflictColumn
-            // such as a primary key already present in the table. If there is a conflict we
-            // instead update this row
-            const query = `
-                INSERT INTO ${this.tableName} (${columns.join(', ')})
-                VALUES (${placeholders})
-                ON CONFLICT (${conflictColumn}) DO UPDATE
-                SET ${updates};
-                `;
-            
-            await client.query(query, Object.values(data));
+            // insert or update Main Table
+            const { mainData, junctionData } = data;
+            await this.insertOrUpdateTable(client, this.tableName, mainData);
+            // iterate through the junctionTables and then through each row we added
+            for (const [tableName, rows] of Object.entries(junctionData)) {
+                for (const row of rows) {
+                    await this.insertOrUpdateTable(client, tableName, row);
+                }
+            }
+
             console.log(`Data successfully inserted/updated in ${this.tableName}`);
         } catch (error) {
             console.error(`Error while inserting/updating data in ${this.tableName}: `,error);
@@ -69,8 +59,12 @@ class ETL {
         }
 
     }
+
+    async insertOrUpdateTable(client, tableName, dataBuilder) {
+        
+    }
     // Abstract methods implemented by subclasses
-    getEndpoint() {
+    getEndpoint(id) {
         throw new Error(`getEndpoint() must be implemented in subclasses`);
     }
 
@@ -80,11 +74,21 @@ class ETL {
 
     // the template method in the abstract class defines the structure of the algorithm
     // it uses other methods (some of which may be abstract) to complete the algorithm
-    async processData() {
-        const url = this.getEndpoint();
+    async processData(url) {
         const rawData = await this.fetchData(url);
         const transformedData = await this.transformData(rawData);
         await this.upsertData(transformedData);
+    }
+
+    async processRange(start, end) {
+        for (let i = start; i<= end; i++) {
+            try {
+                const url = this.getEndpoint(i);
+                await this.processData(url)
+            } catch (error) {
+                console.error(`Error processing item ID ${i}:`, error)
+            }
+        }
     }
 }
 
