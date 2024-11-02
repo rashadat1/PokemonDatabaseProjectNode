@@ -6,7 +6,7 @@ steps - some methods might be concrete others might be abstract
 */
 
 class ETL {
-    constructor(pool, tableNam, junctionTables = []) {
+    constructor(pool, tableName, junctionTables = []) {
         // database connection pool 
         this.pool = pool;
         // database table 
@@ -61,7 +61,26 @@ class ETL {
     }
 
     async insertOrUpdateTable(client, tableName, dataBuilder) {
-        
+        // each row is a databuilder object 
+        const { data, columns, conflictColumn } = dataBuilder.build();
+        const placeholders = columns.map((_,i) => `$${i + 1}`).join(', ');
+        const updates = columns.map(col => `${col} = EXCLUDED.${col}`).join(', ');
+
+        // Conflict clause for composite keys
+        const conflictClause = Array.isArray(conflictColumn)
+            ? conflictColumn.join(', ')
+            : conflictColumn;
+
+        // Insert or Update query based on if there is a conflict
+        const query = `
+            INSERT INTO ${tableName} (${columns.join(', ')})
+            VALUES (${placeholders})
+            ON CONFLICT (${conflictClause}) DO UPDATE
+            SET ${updates};
+        `;
+
+        await client.query(query, Object.values(data));
+
     }
     // Abstract methods implemented by subclasses
     getEndpoint(id) {
@@ -81,7 +100,7 @@ class ETL {
     }
 
     async processRange(start, end) {
-        for (let i = start; i<= end; i++) {
+        for (let i = start; i <= end; i++) {
             try {
                 const url = this.getEndpoint(i);
                 await this.processData(url)

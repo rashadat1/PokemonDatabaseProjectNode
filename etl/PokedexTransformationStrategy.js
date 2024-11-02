@@ -1,4 +1,6 @@
 // here we create the strategy for transforming Pokedex data
+
+// TBD create learnsets table
 const axios = require('axios');
 const DataBuilder = require('./DataBuilder');
 

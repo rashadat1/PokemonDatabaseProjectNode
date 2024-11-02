@@ -208,6 +208,17 @@ CREATE TABLE IF NOT EXISTS EVOLUTIONS (
     turn_upside_down BOOLEAN,
     PRIMARY KEY (pokemon_id_from, pokemon_id_to)
 );
+-- create categories because some moves will be handled somewhat uniquely in the game
+-- Move Category Table
+CREATE TABLE IF NOT EXISTS MOVE_CATEGORY (
+    id INT SERIAL PRIMARY KEY,
+    category_name VARCHAR(50)
+)
+-- Move Move Category Table
+CREATE TABLE IF NOT EXISTS MOVE_MOVE_CATEGORY (
+    move_id INT REFERENCES MOVES(id),
+    category_id INT REFERENCES MOVE_CATEGORY(id)
+)
 -- create indices for Learnsets and Location Area Encounters tables
 -- these will both be quite large as they are many-to-many with a lot of keys
 CREATE INDEX idx_learnsets_pokemon_id ON LEARNSETS(pokemon_id);
