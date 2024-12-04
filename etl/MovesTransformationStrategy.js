@@ -10,7 +10,6 @@ class MovesTransformationStrategy {
         const result = await this.pool.query(`SELECT id FROM types WHERE type_name ILIKE $1`, [typeName]);
         return result.rows[0]?.id;
     }
-
     async getLearnMethodId(methodName) {
         const result = await this.pool.query(`SELECT id FROM learn_methods WHERE method_name ILIKE $1`, [methodName]);
         return result.rows[0]?.id;
@@ -19,13 +18,21 @@ class MovesTransformationStrategy {
         const result = await this.pool.query(`SELECT id FROM ailments WHERE name ILIKE $1`, [ailmentName]);
         return result.rows[0]?.id;
     }
+    async getMoveCategoryId(moveCategoryName) {
+        const result = await this.pool.query(`SELECT id FROM move_category WHERE name ILIKE $1`, [moveCategoryName]);
+    }
     async transform(data) {
         let move_category = data.meta.category.name;
         let stat_change = false;
         let ailment_change = false;
-
-        if ((move_category === 'damage+lower' || move_category === 'damage+raise' || move_category === 'net-good-stats')) {
+        let stat_chance = 0;
+        if (["damage+lower", "damage+raise", "net-good-stats"].includes(move_category)) {
             stat_change = true;
+            if (move_category === 'net-good-stats') {
+                stat_chance = 100;
+            } else if (["damage+lower", "damage+raise"].includes(move_category)) {
+                stat_chance = data.meta.stat_chance; 
+            } 
         }
 
         if ((move_category === 'ailment') || (move_category === 'damage+ailment')) {
@@ -51,6 +58,14 @@ class MovesTransformationStrategy {
             has_ailment: ailment_change,
             has_stat_change: stat_change
         };
+        const moveMoveCategory = [];
+        const categoryId = await this.getMoveCategoryId(move_category);
+        if (categoryId) {
+            moveMoveCategory.push({
+                move_id: data.id,
+                category_id: categoryId
+            });
+        }
         // create move_types, move_ailments, and move_stat_change tables
         const moveTypes = [];
         if (data.type) {
@@ -98,19 +113,14 @@ class MovesTransformationStrategy {
         damage+lower moves contain the moves that damage the target and lower its stats
         */
         if (stat_change) {
-            const moveStatChanges = data.stat_changes
-                .map(stat => ({
+            for (const stat of data.stat_changes) {
+                moveStatChanges.push({
                     move_id: data.id,
                     stat_name: stat.stat.name,
                     change: stat.change,
-                    chance: data.meta.stat_chance
-                }));
-            moveStatChanges.push({
-                move_id: data.id,
-                stat_name: ,
-                change: ,
-                chance: 
-            })
+                    chance: stat_chance
+                })
+            }
         }
 
     };

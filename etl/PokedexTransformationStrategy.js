@@ -18,7 +18,14 @@ class PokedexTransformationStrategy {
         const result = await this.pool.query('SELECT id FROM types WHERE type_name ILIKE $1', [typeName]);
         return result.rows[0]?.id;
     }
-
+    async getMoveId(moveName) {
+        const result = await this.pool.query('SELECT id FROM moves WHERE name ILIKE $1', [moveName]);
+        return result.rows[0]?.id;
+    }
+    async getLearnMethodId(learnMethodName) {
+        const result = await this.pool.query('SELECT id FROM learn_methods WHERE method_name ILIKE $1', [learnMethodName]);
+        return result.rows[0]?.id;
+    }
     async fetchAdditionalData(url) {
         const response = await axios.get(url);
         return response.data;
@@ -81,6 +88,38 @@ class PokedexTransformationStrategy {
                 stat_name: stat.stat.name,
                 ev_yield: stat.effort,
             }));
+        // Gather learnsets for each pokemon by looping through the move object in the
+        // the pokedex endpoint
+        const VERSION_GROUP_PRIORITY = [
+            'scarlet-violet',
+            'brilliant-diamond-and-shining-pearl',
+            'sword-shield',
+            'ultra-sun-ultra-moon',
+            'sun-moon',
+            'omega-ruby-alpha-sapphire'
+        ];
+        const allowedLearnMethods = ['egg', 'tutor', 'machine', 'level-up'];
+        const learnsets = [];
+        for (const move of data.moves) {
+            const moveName = move.move.name;
+            const moveId = await this.getMoveId(moveName);
+        }
+        for (const versionGroupDetail of move.version_group_details) {
+            const learnMethodName = versionGroupDetail.move_learn_method.name;
+            if (allowedLearnMethods.includes(learnMethodName)) {
+                // Only process allowed learnable methods
+                const learnMethodId = await this.getLearnMethodId(learnMethodName);
+                if (learnMethodId) {
+                    learnsets.push({
+                        pokemon_id: data.id,
+                        move_id: moveId,
+                        learn_method_id: learnMethodId,
+                        level_learned: versionGroupDetail.level_learned_at,
+                        version_group: versionGroupDetail.version_group.name,
+                    });
+                }
+            }
+        }
         return {
             mainData: new DataBuilder()
                 .setData(transformed)
@@ -105,6 +144,11 @@ class PokedexTransformationStrategy {
                         .setColumns(['pokemon_id','type_id'])
                         .setConflictColumn(['pokemon_id','type_id'])
                 ),
+                learnsets: learnsets.map(learnset =>
+                    new DataBuilder()
+                        .setData(learnset)
+                        .setColumns(['pokemon_id','move_id','learn_method_id','level_learned','version_group'])
+                        .setConflictColumn(['pokemon_id','move_id','learn_method_id','level_learned','version_group']))
             },
         };
         

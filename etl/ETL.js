@@ -70,7 +70,7 @@ class ETL {
         const conflictClause = Array.isArray(conflictColumn)
             ? conflictColumn.join(', ')
             : conflictColumn;
-
+            
         // Insert or Update query based on if there is a conflict
         const query = `
             INSERT INTO ${tableName} (${columns.join(', ')})
